@@ -11,7 +11,6 @@ def select_elites(states_batch, actions_batch, rewards_batch, percentile=50):
     :param states_batch: list of lists of states, states_batch[session_i][t]
     :param actions_batch: list of lists of actions, actions_batch[session_i][t]
     :param rewards_batch: list of rewards, rewards_batch[session_i]
-    :param percentile: percentile threshold for elite selection
 
     :returns: elite_states,elite_actions, both 1D lists of states and respective actions from elite sessions
 
@@ -21,12 +20,17 @@ def select_elites(states_batch, actions_batch, rewards_batch, percentile=50):
     If you are confused, see examples below. Please don't assume that states are integers
     (they will become different later).
     """
-    # your code here
-    elite_states, elite_actions = None, None
-    assert elite_states is not None and elite_actions is not None
-    # your code here
+    rt = np.percentile(rewards_batch, percentile)
 
-    return elite_states, elite_actions
+    elite_states = []
+    elite_actions = []
+
+    for i in range(len(rewards_batch)):
+        if rewards_batch[i] >= rt:
+            elite_states.extend(states_batch[i])
+            elite_actions.extend(actions_batch[i])
+
+    return [elite_states, elite_actions] 
 
 def update_policy(elite_states, elite_actions, n_states=n_states, n_actions=n_actions):
     """
@@ -40,24 +44,28 @@ def update_policy(elite_states, elite_actions, n_states=n_states, n_actions=n_ac
 
     :param elite_states: 1D list of states from elite sessions
     :param elite_actions: 1D list of actions from elite sessions
-    :param n_states: number of states in the environment
-    :param n_actions: number of actions in the environment
 
-    :returns: new_policy: np.array of shape (n_states, n_actions)
     """
-    # your code here
-    new_policy = None
-    assert new_policy is not None
-    # your code here
+    counts = np.zeros((n_states, n_actions), dtype=np.float64)
 
-    return new_policy
+    for s,a in zip(elite_states, elite_actions):
+        counts[s,a] += 1
+    
+    policy = np.zeros_like(counts)
+
+    for s in range(n_states):
+        total = np.sum(counts[s])
+        if total > 0:
+            policy[s] = counts[s]/total 
+        else:
+            policy[s] = np.ones(n_actions) / n_actions
+            
+    return policy
 
 def generate_session(env, policy, t_max=int(10**4)):
     """
     Play game until end or for t_max ticks.
-    :param env: gym environment
     :param policy: an array of shape [n_states,n_actions] with action probabilities
-    :param t_max: maximum number of steps
     :returns: list of states, list of actions and sum of rewards
     """
     states, actions = [], []
@@ -67,8 +75,8 @@ def generate_session(env, policy, t_max=int(10**4)):
 
     for t in range(t_max):
         # your code here - sample action from policy and get new state, reward, done flag etc. from the environment
-        new_s, r, done = None, None, None
-        a = None
+        a = np.random.choice(len(policy[s]), p=policy[s])
+        new_s, r, done, truncated, info = env.step(a)
         assert new_s is not None and r is not None and done is not None
         assert a is not None
         # your code here
@@ -78,6 +86,6 @@ def generate_session(env, policy, t_max=int(10**4)):
         total_reward += r
 
         s = new_s
-        if done:
+        if done or truncated:
             break
     return states, actions, total_reward
