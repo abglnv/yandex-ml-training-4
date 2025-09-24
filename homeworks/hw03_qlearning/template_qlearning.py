@@ -4,20 +4,9 @@ from collections import defaultdict
 
 
 def my_softmax(values: np.ndarray, T=1.):
-    """
-    Compute softmax with temperature for numerical stability.
-    
-    Args:
-        values: np.array of shape (n,) - input values
-        T: float - temperature parameter (default 1.0)
-    
-    Returns:
-        np.array of shape (n,) - softmax probabilities
-    """
-    # your code here
-    probas = None
-    assert probas is not None
-    return probas
+    shifted = values - np.max(values)
+    exp_values = np.exp(shifted / T)
+    return exp_values / np.sum(exp_values)
 
 
 class QLearningAgent:
@@ -70,7 +59,8 @@ class QLearningAgent:
 
         # YOUR CODE HERE
         # Calculate the approximation of value function V(s).
-        value = None
+        qvalues = np.array([self.get_qvalue(state, a) for a in possible_actions])
+        value = float(np.max(qvalues))
         assert value is not None
 
         return value
@@ -87,7 +77,7 @@ class QLearningAgent:
 
         # YOUR CODE HERE
         # Calculate the updated value of Q(s, a).
-        qvalue = None
+        qvalue = (1 - learning_rate) * self.get_qvalue(state, action) + learning_rate * (reward + gamma * self.get_value(next_state))
         assert qvalue is not None
 
         self.set_qvalue(state, action, qvalue)
@@ -104,7 +94,9 @@ class QLearningAgent:
 
         # YOUR CODE HERE
         # Choose the best action wrt the qvalues.
-        best_action = None
+        qvalues = np.array([self.get_qvalue(state, possible_action) for possible_action in possible_actions])
+        value = np.argmax(qvalues) 
+        best_action = possible_actions[value]
         assert best_action is not None
 
         return best_action
@@ -122,16 +114,19 @@ class QLearningAgent:
         possible_actions = self.get_legal_actions(state)
         # If there are no legal actions, return None
         if len(possible_actions) == 0:
-            return None
+            return None 
 
         # YOUR CODE HERE
         # Compute all actions probabilities in the current state using softmax
-        q_values = None
+        q_values = np.array([self.get_qvalue(state, a) for a in possible_actions])
         assert q_values is not None
-        probabilities = None
+        shifted = q_values - np.max(q_values)
+        exp_values = np.exp(shifted / self.temp)
+        probabilities = exp_values / np.sum(exp_values)
         assert probabilities is not None
 
         return probabilities
+
 
     def get_action(self, state):
         """
@@ -149,7 +144,8 @@ class QLearningAgent:
 
         # YOUR CODE HERE
         # Select the action to take in the current state according to the policy
-        chosen_action = None
+        actions_probabilities = self.get_softmax_policy(state)
+        chosen_action = possible_actions[np.random.choice(len(possible_actions), p=actions_probabilities)]
         assert chosen_action is not None
         return chosen_action
 
@@ -177,7 +173,8 @@ class EVSarsaAgent(QLearningAgent):
 
         # YOUR CODE HERE
         # Compute the value of the current state under the softmax policy.
-        value = None
+        q_values = np.array([self.get_qvalue(state, a) for a in possible_actions])
+        value = np.sum(self.get_softmax_policy(state) * q_values)
         assert value is not None
 
         return value
