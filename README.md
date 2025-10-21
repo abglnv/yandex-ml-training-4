@@ -1,7 +1,7 @@
 # Yandex ML Training 4.0 — Fall 2025
 
 🦖 Welcome!  
-This repository contains my solutions and supporting materials for the **Yandex ML Training 4.0** (Autumn 2025) program, a series of advanced lectures, seminars, and practical assignments dedicated to modern machine learning and computer vision.
+This repository contains my solutions and supporting materials for the **Yandex ML Training 4.0** (Fall 2025) program, a series of advanced lectures, seminars, and practical assignments dedicated to modern machine learning and computer vision.
 
 Below you'll find an English summary of the schedule and topics, as well as useful links for reference. All my homework solutions are documented in this repo.
 
